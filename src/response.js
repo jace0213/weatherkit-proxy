@@ -345,7 +345,7 @@ async function InjectAirQuality(airQuality, Settings, Caches, enviroments) {
     const firstValidProvider = weatherKitMetadata?.providerName || pollutantMetadata?.providerName || indexMetadata?.providerName || comparisonMetadata?.providerName;
 
     // Step7. 合并输出：优先使用可用注入结果，并统一 metadata / pollutants / previousDayComparison
-    return {
+    airQuality = {
         ...airQuality,
         ...(injectedIndex?.metadata && !injectedIndex.metadata.temporarilyUnavailable ? injectedIndex : {}),
         metadata: {
@@ -356,6 +356,8 @@ async function InjectAirQuality(airQuality, Settings, Caches, enviroments) {
         pollutants: AirQuality.ConvertPollutants(airQuality, injectedPollutants, needInjectIndex, injectedIndex, Settings) ?? [],
         previousDayComparison: injectedComparison?.previousDayComparison ?? AirQuality.Config.CompareCategoryIndexes.UNKNOWN,
     };
+    Console.debug(`airQuality: ${JSON.stringify(airQuality, null, 2)}`);
+    return airQuality;
 }
 
 async function InjectPollutants(Settings, enviroments) {
