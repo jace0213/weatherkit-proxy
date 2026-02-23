@@ -177,12 +177,27 @@ export default class MatchEnum {
     }
 
     placementType() {
-        this.json?.news?.placements?.forEach((placement, i) => {
-            const jsonValue = placement?.placement;
-            const protoValue = this.proto?.news?.placements?.[i]?.placement;
-            const protoEnumIndex = WK2.PlacementType[protoValue];
-            if (jsonValue !== protoValue) {
-                $notification.post("PlacementType", "", `json[${i}]: ${jsonValue}\nproto: ${protoEnumIndex}-${protoValue}`);
+        this.json?.news?.placements?.forEach((jsonPlacement, i) => {
+            const jsonArticleIds = jsonPlacement?.articles?.map(a => a?.id) ?? [];
+            const jsonHeadlines = jsonPlacement?.articles?.map(a => a?.headlineOverride) ?? [];
+            // 通过 articles 的 id 或 headlineOverride 匹配对应的 proto placement
+            let protoIndex = -1;
+            const protoPlacement = this.proto?.news?.placements?.find((p, idx) => {
+                const protoArticleIds = p?.articles?.map(a => a?.id) ?? [];
+                const protoHeadlines = p?.articles?.map(a => a?.headlineOverride) ?? [];
+                // 检查是否有相同的 article id 或 headline
+                const matched = jsonArticleIds.some(id => protoArticleIds.includes(id)) || jsonHeadlines.some(h => h && protoHeadlines.includes(h));
+                if (matched) protoIndex = idx;
+                return matched;
+            });
+            if (protoPlacement) {
+                const jsonValue = jsonPlacement?.placement;
+                const protoValue = protoPlacement?.placement;
+                const protoEnumIndex = WK2.PlacementType[protoValue];
+                if (jsonValue !== protoValue) {
+                    const headline = jsonHeadlines[0] ?? jsonArticleIds[0] ?? "";
+                    $notification.post("PlacementType", "", `article: ${headline}\njson[${i}]: ${jsonValue}\nproto[${protoIndex}]: ${protoEnumIndex}-${protoValue}`);
+                }
             }
         });
     }
