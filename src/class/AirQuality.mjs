@@ -327,11 +327,12 @@ export default class AirQuality {
 
     static ToWeatherKitScale = ({ name, version }) => `${name}.${version}`;
     static GetNameFromScale(scale) {
+        if (!scale) return "";
         Console.info("☑️ GetNameFromScale", `scale: ${scale}`);
 
-        const lastDotIndex = scale?.lastIndexOf(".");
-        if (!scale || lastDotIndex === -1) {
-            Console.error("GetNameFromScale", `无法找到${scale}的版本号`);
+        const lastDotIndex = scale.lastIndexOf(".");
+        if (lastDotIndex === -1) {
+            Console.warn("GetNameFromScale", `无法找到${scale}的版本号`);
             return scale;
         }
 
@@ -396,9 +397,46 @@ export default class AirQuality {
      * @param {any} Settings - 全局设置对象
      * @returns {string} 带标准描述的 providerName
      */
-    static appendScaleToProviderName(airQuality, _Settings) {
-        const providerName = airQuality?.metadata?.providerName;
-        return providerName;
+    static appendScaleToProviderName(airQuality, Settings) {
+        const fullProviderName = airQuality?.metadata?.providerName;
+        if (!fullProviderName) return "";
+        
+        const parts = fullProviderName.split("\n");
+        const providerName = parts[0].trim();
+        const suffix = parts.length > 1 ? `\n${parts.slice(1).join("\n")}` : "";
+
+        let scaleDesc = "";
+        switch (providerName) {
+            case "和风天气":
+                scaleDesc = "（国标，12年2月版）";
+                break;
+            case "彩云天气": {
+                const useUsa = airQuality?.scale === AirQuality.ToWeatherKitScale(AirQuality.Config.Scales.EPA_NowCast.weatherKitScale);
+                scaleDesc = `（${useUsa ? "美标，18年9月版" : "国标，12年2月版"}）`;
+                break;
+            }
+            case "iRingo":
+                switch (Settings?.AirQuality?.Calculate?.Algorithm) {
+                    case "EU_EAQI":
+                        scaleDesc = " (ETC HE Report 2024/17)";
+                        break;
+                    case "WAQI_InstantCast_US":
+                        scaleDesc = " (WAQI InstantCast with EPA-454/B-24-002)";
+                        break;
+                    case "WAQI_InstantCast_CN":
+                        scaleDesc = " (InstantCast with HJ 633—2012)";
+                        break;
+                    case "WAQI_InstantCast_CN_25_DRAFT":
+                        scaleDesc = " (InstantCast with HJ 633 2025 DRAFT)";
+                        break;
+                    case "UBA":
+                    default:
+                        scaleDesc = " (FB001846)";
+                        break;
+                }
+                break;
+        }
+        return `${providerName}${scaleDesc}${suffix}`;
     }
 
     /**
@@ -619,7 +657,7 @@ export default class AirQuality {
             UBA: {
                 weatherKitScale: {
                     name: "UBA",
-                    version: "2604",
+                    version: "2414",
                 },
                 // Indexes below for calculation only, not for display
                 categories: {
@@ -717,7 +755,7 @@ export default class AirQuality {
             EU_EAQI: {
                 weatherKitScale: {
                     name: "EU.EAQI",
-                    version: "2604",
+                    version: "2414",
                     maxIndex: 60,
                 },
                 // Indexes below for calculation only, not for display
@@ -1208,7 +1246,7 @@ export default class AirQuality {
             EPA_NowCast: {
                 weatherKitScale: {
                     name: "EPA_NowCast",
-                    version: "2604",
+                    version: "2414",
                 },
                 categories: {
                     significantIndex: 3, // Unhealthy for Sensitive Groups
@@ -1365,7 +1403,7 @@ export default class AirQuality {
             WAQI_InstantCast_US: {
                 weatherKitScale: {
                     name: "EPA_NowCast",
-                    version: "2604",
+                    version: "2414",
                     maxIndex: 500,
                 },
                 categories: {
