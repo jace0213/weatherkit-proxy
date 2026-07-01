@@ -96,9 +96,6 @@ async function handleWeatherRequest(c, queryArguments = {}) {
         Settings: null,
     };
     return requestContext.run(store, async () => {
-        if (executionCtx) {
-            globalThis.ctx = executionCtx;
-        }
         // 使用 HonoWorkerAdapter 构建标准的内部统一请求对象 $request
         const $request = await HonoWorkerAdapter.buildRequest(c.req);
         const url = new URL($request.url);

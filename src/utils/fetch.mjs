@@ -129,7 +129,7 @@ export async function fetch(resource, options = {}) {
                     },
                 });
                 const cachePromise = cache.put(cacheKey, cfResponse).catch(putErr => console.error("Cache put error:", putErr));
-                const ctx = store?.executionCtx || store || globalThis.ctx;
+                const ctx = store?.executionCtx;
                 if (ctx && typeof ctx.waitUntil === "function") {
                     ctx.waitUntil(cachePromise);
                 }
